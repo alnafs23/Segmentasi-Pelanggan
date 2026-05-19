@@ -95,7 +95,19 @@ section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.1) !impor
 .stTabs [data-baseweb="tab-list"] { gap: 4px; background: #f1f5f9; border-radius: 10px; padding: 4px; }
 .stTabs [data-baseweb="tab"] { border-radius: 7px; font-weight: 600; font-size: .85rem; padding: .4rem 1rem; }
 .stTabs [aria-selected="true"] { background: white !important; color: #0f2027 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-
+@media (prefers-color-scheme: dark) {
+    .stTabs [data-baseweb="tab-list"] {
+        background: #1e293b !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #cbd5e1 !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: #334155 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+}
 /* Tabel */
 .dataframe thead th { background: #0f2027 !important; color: white !important; font-weight: 600; }
 .dataframe tbody tr:nth-child(even) { background: #f8fafc; }
@@ -316,7 +328,7 @@ Segmentasi pelanggan grosir menggunakan **Fuzzy C-Means (FCM)** berbasis model *
 # HEADER
 st.markdown("""
 <div class="main-header">
-    <h1>📊 Segmentasi Pelanggan Grosir</h1>
+    <h1>Segmentasi Pelanggan Grosir</h1>
     <p>Fuzzy C-Means Clustering · Model LRFM-CLV · Online Retail II Dataset</p>
 </div>
 """, unsafe_allow_html=True)
