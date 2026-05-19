@@ -1,7 +1,5 @@
-"""
-Segmentasi Pelanggan Grosir — LRFM-CLV + Fuzzy C-Means
-Antarmuka Streamlit
-"""
+# Segmentasi Pelanggan Grosir — LRFM-CLV + Fuzzy C-Means
+# Antarmuka Streamlit 
 
 import streamlit as st
 import numpy as np
@@ -19,7 +17,7 @@ from sklearn.decomposition import PCA
 
 warnings.filterwarnings("ignore")
 
-# ── Konfigurasi halaman ──────────────────────────────────────────────
+# Konfigurasi halaman 
 st.set_page_config(
     page_title="Segmentasi Pelanggan LRFM-CLV",
     page_icon="📊",
@@ -27,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── CSS kustom ───────────────────────────────────────────────────────
+# CSS kustom 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -108,7 +106,13 @@ section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.1) !impor
     border-left: 4px solid #0891b2; padding-left: .7rem;
     margin: 1.5rem 0 1rem 0;
 }
-
+@media (prefers-color-scheme: dark) {
+    .section-title {
+        color: #e2e8f0 !important;
+        border-left-color: #2dd4bf !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+}
 /* Info box */
 .info-box {
     background: #f0f9ff; border: 1px solid #bae6fd;
@@ -125,7 +129,7 @@ section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.1) !impor
 </style>
 """, unsafe_allow_html=True)
 
-# ── Konstanta ────────────────────────────────────────────────────────
+# Konstanta 
 ORDER       = ["High Value / Loyal", "Medium Value / Potential", "Low Value / Passive"]
 COLOR_MAP   = {
     "High Value / Loyal":       "#2ecc71",
@@ -137,10 +141,7 @@ M_FUZZY     = 2
 MAX_ITER    = 300
 ERROR       = 0.0001
 
-# ════════════════════════════════════════════════════════════════════
 # FUNGSI UTAMA
-# ════════════════════════════════════════════════════════════════════
-
 @st.cache_data(show_spinner=False)
 def load_data(file_bytes: bytes) -> pd.DataFrame:
     buf = io.BytesIO(file_bytes)
@@ -148,7 +149,6 @@ def load_data(file_bytes: bytes) -> pd.DataFrame:
     buf.seek(0)
     df2 = pd.read_excel(buf, sheet_name="Year 2010-2011", dtype={"Customer ID": str})
     return pd.concat([df1, df2], ignore_index=True)
-
 
 @st.cache_data(show_spinner=False)
 def preprocess(raw_bytes: bytes):
@@ -173,7 +173,6 @@ def preprocess(raw_bytes: bytes):
     df["TotalPrice"]  = df["Quantity"] * df["Price"]
     df.reset_index(drop=True, inplace=True)
     return df, log
-
 
 @st.cache_data(show_spinner=False)
 def build_lrfm(clean_bytes: bytes):
@@ -201,7 +200,6 @@ def build_lrfm(clean_bytes: bytes):
 
     return lrfm, df_norm, REF_DATE, log
 
-
 @st.cache_data(show_spinner=False)
 def evaluate_clusters(raw_bytes: bytes, k_range=(2, 9)):
     lrfm, df_norm, _, _ = build_lrfm(raw_bytes)
@@ -224,7 +222,6 @@ def evaluate_clusters(raw_bytes: bytes, k_range=(2, 9)):
         results["dbi"].append(dbi)
 
     return pd.DataFrame(results)
-
 
 @st.cache_data(show_spinner=False)
 def run_fcm(raw_bytes: bytes, k_optimal: int = 3, threshold: float = 0.20):
@@ -288,9 +285,7 @@ def run_fcm(raw_bytes: bytes, k_optimal: int = 3, threshold: float = 0.20):
     return df_final, df_res, profile, centroid_df, cntr, label_map, X, metrics, log
 
 
-# ════════════════════════════════════════════════════════════════════
 # SIDEBAR
-# ════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("## 📂 Upload Dataset")
     st.markdown("Dataset: **Online Retail II** (UCI ML Repository)")
@@ -318,9 +313,7 @@ Segmentasi pelanggan grosir menggunakan **Fuzzy C-Means (FCM)** berbasis model *
 - **CLV** — Customer Lifetime Value
     """)
 
-# ════════════════════════════════════════════════════════════════════
 # HEADER
-# ════════════════════════════════════════════════════════════════════
 st.markdown("""
 <div class="main-header">
     <h1>📊 Segmentasi Pelanggan Grosir</h1>
@@ -328,9 +321,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ════════════════════════════════════════════════════════════════════
 # KONDISI: BELUM UPLOAD
-# ════════════════════════════════════════════════════════════════════
 if uploaded is None:
     st.markdown("""
     <div class="info-box">
@@ -355,9 +346,7 @@ if uploaded is None:
         """, unsafe_allow_html=True)
     st.stop()
 
-# ════════════════════════════════════════════════════════════════════
 # PROSES DATA
-# ════════════════════════════════════════════════════════════════════
 raw_bytes = uploaded.read()
 
 with st.spinner("🔄 Memproses data dan menjalankan FCM..."):
@@ -371,20 +360,16 @@ with st.spinner("🔄 Memproses data dan menjalankan FCM..."):
         st.error(f"❌ Terjadi error: {e}")
         st.stop()
 
-# ════════════════════════════════════════════════════════════════════
 # TABS UTAMA
-# ════════════════════════════════════════════════════════════════════
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "🏠 Ringkasan",
-    "🧹 Preprocessing",
-    "📐 Analisis LRFM",
-    "🎯 Clustering",
-    "📈 Visualisasi",
+    "Ringkasan",
+    "Preprocessing",
+    "Analisis LRFM",
+    "Clustering",
+    "Visualisasi",
 ])
 
-# ════════════════════════════════════════════════════════════════════
 # TAB 1 — RINGKASAN
-# ════════════════════════════════════════════════════════════════════
 with tab1:
     st.markdown('<div class="section-title">Ringkasan Eksekutif</div>', unsafe_allow_html=True)
 
@@ -449,10 +434,7 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-
-# ════════════════════════════════════════════════════════════════════
 # TAB 2 — PREPROCESSING
-# ════════════════════════════════════════════════════════════════════
 with tab2:
     st.markdown('<div class="section-title">Hasil Pembersihan Data</div>', unsafe_allow_html=True)
 
@@ -496,10 +478,7 @@ with tab2:
     st.pyplot(fig)
     plt.close()
 
-
-# ════════════════════════════════════════════════════════════════════
 # TAB 3 — ANALISIS LRFM
-# ════════════════════════════════════════════════════════════════════
 with tab3:
     st.markdown('<div class="section-title">Evaluasi Jumlah Kluster Optimal (k = 2 – 8)</div>',
                 unsafe_allow_html=True)
@@ -531,10 +510,7 @@ with tab3:
     clv_stats = clv_stats.loc[[o for o in ORDER if o in clv_stats.index]]
     st.dataframe(clv_stats, use_container_width=True)
 
-
-# ════════════════════════════════════════════════════════════════════
 # TAB 4 — CLUSTERING
-# ════════════════════════════════════════════════════════════════════
 with tab4:
     st.markdown('<div class="section-title">Evaluasi Kualitas Clustering</div>', unsafe_allow_html=True)
 
@@ -602,12 +578,9 @@ with tab4:
             </div>
             """, unsafe_allow_html=True)
 
-
-# ════════════════════════════════════════════════════════════════════
 # TAB 5 — VISUALISASI
-# ════════════════════════════════════════════════════════════════════
 with tab5:
-    # ── Bar chart distribusi ──────────────────────────────────────
+    # Bar chart distribusi
     st.markdown('<div class="section-title">Distribusi Pelanggan per Segmen</div>', unsafe_allow_html=True)
     seg_counts = df_final["Segment"].value_counts().reindex(ORDER).dropna()
     fig, ax = plt.subplots(figsize=(8, 4.5))
@@ -624,7 +597,7 @@ with tab5:
     st.pyplot(fig)
     plt.close()
 
-    # ── Radar chart ───────────────────────────────────────────────
+    # Radar chart 
     st.markdown('<div class="section-title">Radar Chart Profil LRFM-CLV per Segmen</div>', unsafe_allow_html=True)
     features_r = ["L_norm","R_norm","F_norm","M_norm","CLV"]
     labels_r   = ["Length","Recency","Frequency","Monetary","CLV"]
@@ -650,7 +623,7 @@ with tab5:
 
     col_l, col_r = st.columns(2)
 
-    # ── Scatter F vs M ────────────────────────────────────────────
+    # Scatter F vs M 
     with col_l:
         st.markdown('<div class="section-title">Scatter: Frequency vs Monetary</div>', unsafe_allow_html=True)
         fig, ax = plt.subplots(figsize=(6, 4.5))
@@ -667,7 +640,7 @@ with tab5:
         st.pyplot(fig)
         plt.close()
 
-    # ── PCA 2D ────────────────────────────────────────────────────
+    # PCA 2D 
     with col_r:
         st.markdown('<div class="section-title">PCA 2D — Distribusi Kluster</div>', unsafe_allow_html=True)
         pca   = PCA(n_components=2, random_state=42)
@@ -685,7 +658,7 @@ with tab5:
         st.pyplot(fig)
         plt.close()
 
-    # ── Heatmap ───────────────────────────────────────────────────
+    #  Heatmap 
     st.markdown('<div class="section-title">Heatmap Rata-Rata LRFM-CLV per Segmen</div>', unsafe_allow_html=True)
     hmap = radar_mean.copy()
     hmap.columns = ["Length","Recency","Frequency","Monetary","CLV"]
@@ -697,7 +670,7 @@ with tab5:
     st.pyplot(fig)
     plt.close()
 
-    # ── Box plot ──────────────────────────────────────────────────
+    # Box plot 
     st.markdown('<div class="section-title">Box Plot Distribusi LRFM per Segmen</div>', unsafe_allow_html=True)
     fig, axes = plt.subplots(1, 4, figsize=(16, 4.5))
     palette = {s: COLOR_MAP[s] for s in ORDER}
