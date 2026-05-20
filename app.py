@@ -1,5 +1,5 @@
 # Segmentasi Pelanggan Grosir — LRFM-CLV + Fuzzy C-Means
-# # Antarmuka Streamlit 
+# Antarmuka Streamlit 
 
 import streamlit as st
 import numpy as np
@@ -69,6 +69,29 @@ html, body, [class*="css"] {
 .metric-card .label { font-size: .75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .8px; margin-bottom: .3rem; }
 .metric-card .value { font-size: 1.9rem; font-weight: 800; color: #111827; font-family: 'JetBrains Mono', monospace; }
 .metric-card .sub   { font-size: .75rem; color: #9ca3af; margin-top: .15rem; }
+@media (prefers-color-scheme: dark) {
+    .metric-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .metric-card .label { color: #94a3b8 !important; }
+    .metric-card .value { color: #f1f5f9 !important; }
+    .metric-card .sub   { color: #64748b !important; }
+    /* teks inline di kartu landing page & kartu segmen */
+    .metric-card div[style*="color:#6b7280"]  { color: #94a3b8 !important; }
+    .metric-card div[style*="color:#374151"]  { color: #cbd5e1 !important; }
+    .metric-card div[style*="font-weight:700"],
+    .metric-card div[style*="font-weight:800"] { color: #f1f5f9 !important; }
+    .metric-card div[style*="font-size:2rem"]  { color: #f1f5f9 !important; }
+    .metric-card div[style*="font-size:1.6rem"] { color: #f1f5f9 !important; }
+    .metric-card div[style*="font-size:1rem"]  { color: #e2e8f0 !important; }
+    .metric-card div[style*="font-size:.8rem"] { color: #94a3b8 !important; }
+    .metric-card div[style*="font-size:.78rem"] { color: #cbd5e1 !important; }
+    .metric-card div[style*="font-size:.75rem"] { color: #64748b !important; }
+    .metric-card table td { color: #cbd5e1 !important; }
+    .metric-card table td strong { color: #f1f5f9 !important; }
+}
 
 /* Badge segmen */
 .badge-high   { background:#d1fae5; color:#065f46; border-radius:20px; padding:3px 12px; font-size:.8rem; font-weight:600; }
@@ -137,6 +160,18 @@ section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.1) !impor
     border-radius: 10px; padding: 1rem 1.2rem;
     font-size: .875rem; color: #92400e;
     margin-bottom: 1rem;
+}
+@media (prefers-color-scheme: dark) {
+    .info-box {
+        background: #0c2340 !important;
+        border-color: #1e4976 !important;
+        color: #7dd3fc !important;
+    }
+    .warn-box {
+        background: #2d1f00 !important;
+        border-color: #78450a !important;
+        color: #fbbf24 !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
