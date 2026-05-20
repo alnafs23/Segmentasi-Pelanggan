@@ -1,5 +1,5 @@
 # Segmentasi Pelanggan Grosir — LRFM-CLV + Fuzzy C-Means
-# Antarmuka Streamlit 
+# # Antarmuka Streamlit 
 
 import streamlit as st
 import numpy as np
@@ -149,7 +149,8 @@ COLOR_MAP   = {
     "Low Value / Passive":      "#e74c3c",
 }
 FEATURES    = ["L_norm", "R_norm", "F_norm", "M_norm", "CLV"]
-M_FUZZY     = 2
+# CATATAN: M_FUZZY dihapus sebagai konstanta global karena sekarang
+# diambil dari slider sidebar (m_fuzzy) agar UI dan komputasi sinkron.
 MAX_ITER    = 300
 ERROR       = 0.0001
 
@@ -169,16 +170,32 @@ def preprocess(raw_bytes: bytes):
 
     log = {}
     log["raw"]  = len(df)
+
+    # Langkah 1: hapus duplikat
     df.drop_duplicates(inplace=True)
     log["dup"]  = log["raw"] - len(df)
+
+    # Langkah 2: hapus baris tanpa Customer ID
+    before_mis = len(df)
     df.dropna(subset=["Customer ID"], inplace=True)
-    log["mis"]  = log["raw"] - log["dup"] - len(df)
+    log["mis"]  = before_mis - len(df)
+
+    # Langkah 3: hapus transaksi pembatalan (Invoice berawalan 'C')
+    before_can = len(df)
     df = df[~df["Invoice"].astype(str).str.startswith("C")]
-    log["can"]  = log["raw"] - log["dup"] - log["mis"] - len(df)
+    log["can"]  = before_can - len(df)
+
+    # Langkah 4: hapus Quantity <= 0
+    before_qty = len(df)
     df = df[df["Quantity"] > 0]
+    log["qty"]  = before_qty - len(df)
+
+    # Langkah 5: hapus Price <= 0
+    before_prc = len(df)
     df = df[df["Price"] > 0]
-    log["neg"]  = log["raw"] - log["dup"] - log["mis"] - log["can"] - len(df)
-    log["clean"] = len(df)
+    log["prc"]  = before_prc - len(df)
+
+    log["clean"]     = len(df)
     log["customers"] = df["Customer ID"].nunique()
 
     df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"])
@@ -212,8 +229,11 @@ def build_lrfm(clean_bytes: bytes):
 
     return lrfm, df_norm, REF_DATE, log
 
+# [REVISI PRIORITAS TINGGI]
+# evaluate_clusters sekarang menerima parameter m_fuzzy dari sidebar
+# sehingga grafik evaluasi mencerminkan nilai fuzzifier yang dipilih user.
 @st.cache_data(show_spinner=False)
-def evaluate_clusters(raw_bytes: bytes, k_range=(2, 9)):
+def evaluate_clusters(raw_bytes: bytes, m_fuzzy: float = 2.0, k_range=(2, 9)):
     lrfm, df_norm, _, _ = build_lrfm(raw_bytes)
     X   = df_norm[FEATURES].values
     X_T = X.T
@@ -221,7 +241,7 @@ def evaluate_clusters(raw_bytes: bytes, k_range=(2, 9)):
 
     for k in range(*k_range):
         cntr, u, _, _, _, _, fpc = fuzz.cluster.cmeans(
-            X_T, c=k, m=M_FUZZY, error=ERROR, maxiter=MAX_ITER, init=None, seed=42
+            X_T, c=k, m=m_fuzzy, error=ERROR, maxiter=MAX_ITER, init=None, seed=42
         )
         lbl = np.argmax(u, axis=0)
         sse = sum(np.sum((X[lbl == j] - cntr[j]) ** 2) for j in range(k))
@@ -235,14 +255,18 @@ def evaluate_clusters(raw_bytes: bytes, k_range=(2, 9)):
 
     return pd.DataFrame(results)
 
+# [REVISI PRIORITAS TINGGI]
+# run_fcm sekarang menerima parameter m_fuzzy dari sidebar
+# sehingga semua hasil clustering (profil, metrik, zona transisi)
+# konsisten dengan fuzzifier yang dipilih user.
 @st.cache_data(show_spinner=False)
-def run_fcm(raw_bytes: bytes, k_optimal: int = 3, threshold: float = 0.20):
+def run_fcm(raw_bytes: bytes, k_optimal: int = 3, m_fuzzy: float = 2.0, threshold: float = 0.20):
     lrfm, df_norm, REF_DATE, log = build_lrfm(raw_bytes)
     X   = df_norm[FEATURES].values
     X_T = X.T
 
     cntr, u, _, _, _, p, fpc = fuzz.cluster.cmeans(
-        X_T, c=k_optimal, m=M_FUZZY, error=ERROR, maxiter=MAX_ITER, init=None, seed=42
+        X_T, c=k_optimal, m=m_fuzzy, error=ERROR, maxiter=MAX_ITER, init=None, seed=42
     )
     labels = np.argmax(u, axis=0)
 
@@ -363,11 +387,13 @@ raw_bytes = uploaded.read()
 
 with st.spinner("🔄 Memproses data dan menjalankan FCM..."):
     try:
+        # [REVISI PRIORITAS TINGGI] — teruskan m_fuzzy dari slider ke run_fcm
         df_final, df_res, profile, centroid_df, cntr, label_map, X, metrics, log = run_fcm(
-            raw_bytes, k_optimal=k_optimal, threshold=threshold
+            raw_bytes, k_optimal=k_optimal, m_fuzzy=m_fuzzy, threshold=threshold
         )
         lrfm, df_norm, REF_DATE, _ = build_lrfm(raw_bytes)
-        df_eval = evaluate_clusters(raw_bytes)
+        # [REVISI PRIORITAS TINGGI] — teruskan m_fuzzy dari slider ke evaluate_clusters
+        df_eval = evaluate_clusters(raw_bytes, m_fuzzy=m_fuzzy)
     except Exception as e:
         st.error(f"❌ Terjadi error: {e}")
         st.stop()
@@ -450,15 +476,33 @@ with tab1:
 with tab2:
     st.markdown('<div class="section-title">Hasil Pembersihan Data</div>', unsafe_allow_html=True)
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    pre_cards = [
-        ("Data Awal", f"{log['raw']:,}", "total baris"),
-        ("Duplikat", f"{log['dup']:,}", "dihapus"),
+    # [REVISI PRIORITAS SEDANG]
+    # Menampilkan 7 kartu terpisah (konsisten dengan laporan & notebook):
+    # Data Awal | Duplikat | Missing CustID | Pembatalan | Qty≤0 | Price≤0 | Data Bersih
+    c1, c2, c3, c4 = st.columns(4)
+    pre_cards_row1 = [
+        ("Data Awal",      f"{log['raw']:,}", "total baris"),
+        ("Duplikat",       f"{log['dup']:,}", "dihapus"),
         ("Missing CustID", f"{log['mis']:,}", "dihapus"),
-        ("Pembatalan", f"{log['can']:,}", "invoice 'C'"),
-        ("Data Bersih", f"{log['clean']:,}", f"{log['customers']:,} pelanggan"),
+        ("Pembatalan",     f"{log['can']:,}", "invoice 'C'"),
     ]
-    for col, (label, val, sub) in zip([c1,c2,c3,c4,c5], pre_cards):
+    for col, (label, val, sub) in zip([c1, c2, c3, c4], pre_cards_row1):
+        col.markdown(f"""
+        <div class="metric-card">
+            <div class="label">{label}</div>
+            <div class="value" style="font-size:1.4rem">{val}</div>
+            <div class="sub">{sub}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("")
+    c5, c6, c7 = st.columns(3)
+    pre_cards_row2 = [
+        ("Quantity ≤ 0", f"{log['qty']:,}", "dihapus"),
+        ("Price ≤ 0",    f"{log['prc']:,}", "dihapus"),
+        ("Data Bersih",  f"{log['clean']:,}", f"{log['customers']:,} pelanggan"),
+    ]
+    for col, (label, val, sub) in zip([c5, c6, c7], pre_cards_row2):
         col.markdown(f"""
         <div class="metric-card">
             <div class="label">{label}</div>
