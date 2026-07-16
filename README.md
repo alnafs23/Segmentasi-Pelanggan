@@ -17,7 +17,7 @@ Sebuah aplikasi *Machine Learning* yang mengelompokkan pelanggan ke dalam segmen
 
 ## 💡 Latar Belakang
 
-> *"Tidak semua pelanggan diciptakan sama — dan strategi pemasaran seharusnya juga begitu."*
+> *"Tidak semua pelanggan diciptakan sama dan strategi pemasaran seharusnya juga begitu."*
 
 Setiap pelanggan punya cerita yang berbeda: ada yang loyal dan sering bertransaksi, ada yang baru mengenal produk, dan ada pula yang mulai menjauh. **Segmentasi Pelanggan** hadir untuk mengungkap pola-pola tersembunyi ini menggunakan algoritma *clustering*, sehingga bisnis dapat:
 
